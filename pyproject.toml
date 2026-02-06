@@ -14,6 +14,7 @@ dependencies = [
   "gymnasium",
   "deprecated",
   "pysdl2",
+  "pysdl2-dll",
   "skrl[torch]",
   "torch",
   "tensordict",
