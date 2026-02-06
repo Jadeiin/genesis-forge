@@ -21,8 +21,10 @@ __all__ = ["Gamepad", "GamepadState", "Key", "ControllerEventLoop"]
 class GamepadState:
     """Data from a gamepad - backward compatible with HID implementation."""
 
+    NUM_AXES = 6  # leftx, lefty, rightx, righty, lefttrigger, righttrigger
+
     def __init__(self):
-        self.axis_values: list[float] = [0.0] * 6  # 6 axes: leftx, lefty, rightx, righty, lefttrigger, righttrigger
+        self.axis_values: list[float] = [0.0] * self.NUM_AXES
         self.buttons: list[str] = []
         self.dpad: str | None = None
 
@@ -49,7 +51,9 @@ class Gamepad:
     SDL2-based gamepad controller with backward compatibility for the HID-based API.
     
     This implementation uses SDL2's controller API for better cross-platform support
-    and standardized button/axis mappings.
+    and standardized button/axis mappings. SDL2 automatically detects and connects to
+    game controllers, so the legacy HID parameters (config, vendor_id, product_id)
+    are now deprecated and ignored.
     
     Example::
     
@@ -70,14 +74,14 @@ class Gamepad:
     AXIS_TRIGGERLEFT = 4
     AXIS_TRIGGERRIGHT = 5
 
-    def __init__(self, config=None, vendor_id=None, product_id=None, debug=False):
+    def __init__(self, config=None, vendor_id=None, product_id=None, debug: bool = False):
         """
         Initialize the SDL2 gamepad.
         
         Args:
-            config: Ignored for SDL2 (kept for backward compatibility)
-            vendor_id: Ignored for SDL2 (kept for backward compatibility)
-            product_id: Ignored for SDL2 (kept for backward compatibility)
+            config: Deprecated - ignored for SDL2 (kept for backward compatibility)
+            vendor_id: Deprecated - ignored for SDL2 (kept for backward compatibility)
+            product_id: Deprecated - ignored for SDL2 (kept for backward compatibility)
             debug: If True, print debug information
         """
         self._state = GamepadState()
@@ -110,7 +114,7 @@ class Gamepad:
                 # Map SDL2 axis to our axis array
                 axis_idx = key.index
                 if axis_idx < len(self._state.axis_values):
-                    self._state.axis_values[axis_idx] = key.value or 0.0
+                    self._state.axis_values[axis_idx] = key.value if key.value is not None else 0.0
                     
             elif key.keytype == Key.BUTTON:
                 button_name = key.name or f"button_{key.index}"
