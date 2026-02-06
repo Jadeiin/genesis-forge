@@ -6,7 +6,7 @@ import genesis as gs
 
 from genesis_forge.genesis_env import GenesisEnv
 from genesis_forge.managers.base import BaseManager
-from genesis_forge.gamepads import Gamepad
+from lav2.gamepads import Gamepad
 
 CommandRangeValue = Tuple[float, float]
 CommandRange = CommandRangeValue | dict[str, CommandRangeValue]

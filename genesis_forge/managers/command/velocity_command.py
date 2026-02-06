@@ -7,7 +7,7 @@ import genesis as gs
 
 from genesis_forge.genesis_env import GenesisEnv
 from genesis_forge.utils import transform_by_quat
-from genesis_forge.gamepads import Gamepad
+from lav2.gamepads import Gamepad
 
 from .command_manager import CommandManager, CommandRangeValue
 

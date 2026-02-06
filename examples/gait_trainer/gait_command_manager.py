@@ -10,7 +10,7 @@ from genesis.engine.entities import RigidEntity
 from genesis_forge.managers.command.command_manager import CommandManager, CommandRange
 from genesis_forge.managers import ContactManager
 from genesis_forge.genesis_env import GenesisEnv
-from genesis_forge.gamepads import Gamepad
+from lav2.gamepads import Gamepad
 
 GAIT_PERIOD_RANGE = [0.3, 0.6]
 FOOT_CLEARANCE_RANGE = [0.04, 0.12]

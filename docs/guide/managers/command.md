@@ -122,7 +122,7 @@ After your policy is trained, you can control the commanded values with a physic
 ```{code-block} python
 :caption: train.py
 
-from genesis_forge.gamepads import Gamepad
+from lav2.gamepads import Gamepad
 
 #...
 

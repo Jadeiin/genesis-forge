@@ -7,7 +7,7 @@ import genesis as gs
 
 from rsl_rl.runners import OnPolicyRunner
 from genesis_forge.wrappers import RslRlWrapper
-from genesis_forge.gamepads import Gamepad
+from lav2.gamepads import Gamepad
 from environment import Go2GaitTrainingEnv
 
 EXPERIMENT_NAME = "go2-gait"
