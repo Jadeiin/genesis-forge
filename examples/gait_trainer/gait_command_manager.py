@@ -10,7 +10,7 @@ from genesis.engine.entities import RigidEntity
 from genesis_forge.managers.command.command_manager import CommandManager, CommandRange
 from genesis_forge.managers import ContactManager
 from genesis_forge.genesis_env import GenesisEnv
-from genesis_forge.gamepads import Gamepad
+from genesis_forge.gamepads import GamepadWrapper
 
 GAIT_PERIOD_RANGE = [0.3, 0.6]
 FOOT_CLEARANCE_RANGE = [0.04, 0.12]
@@ -91,7 +91,7 @@ class GaitCommandManager(CommandManager):
         self._robot_entity_attr = robot_entity_attr
         self._foot_names = foot_names
         self.foot_links = []
-        self._gamepad: Gamepad | None = None
+        self._gamepad: GamepadWrapper | None = None
         self._gamepad_btn_pressed: bool = False
         self._gamepad_gait_idx = 0
 
@@ -261,7 +261,7 @@ class GaitCommandManager(CommandManager):
             dim=-1,
         )
 
-    def use_gamepad(self, gamepad: Gamepad):
+    def use_gamepad(self, gamepad: GamepadWrapper):
         """
         Control the command using a gamepad.
         Pressing the A button will cycle through the gaits.
@@ -399,7 +399,9 @@ class GaitCommandManager(CommandManager):
         """
         Select a new gait when the A button is pressed.
         """
-        if "A" in self._gamepad.state.buttons:
+        # SDL2 button names are lowercase
+        buttons = self._gamepad.buttons()
+        if "a" in buttons:
             self._gamepad_btn_pressed = True
         elif self._gamepad_btn_pressed:
             self._gamepad_btn_pressed = False

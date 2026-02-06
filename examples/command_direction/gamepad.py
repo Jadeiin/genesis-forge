@@ -7,7 +7,7 @@ import genesis as gs
 
 from rsl_rl.runners import OnPolicyRunner
 from genesis_forge.wrappers import RslRlWrapper
-from genesis_forge.gamepads import Gamepad
+from genesis_forge.gamepads import GamepadWrapper
 from environment import Go2CommandDirectionEnv
 
 EXPERIMENT_NAME = "go2-command"
@@ -55,7 +55,7 @@ def main():
 
     # Connect to gamepad
     print("🎮 Connecting to gamepad...")
-    gamepad = Gamepad()
+    gamepad = GamepadWrapper()
     env.velocity_command.use_gamepad(gamepad)
 
     # Eval

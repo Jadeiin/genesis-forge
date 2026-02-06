@@ -7,7 +7,7 @@ import genesis as gs
 
 from genesis_forge.genesis_env import GenesisEnv
 from genesis_forge.utils import transform_by_quat
-from genesis_forge.gamepads import Gamepad
+from genesis_forge.gamepads import GamepadWrapper
 
 from .command_manager import CommandManager, CommandRangeValue
 
@@ -214,7 +214,7 @@ class VelocityCommandManager(CommandManager):
 
     def use_gamepad(
         self,
-        gamepad: Gamepad,
+        gamepad: GamepadWrapper,
         lin_vel_y_axis: int = 0,
         lin_vel_x_axis: int = 1,
         ang_vel_z_axis: int = 2,
@@ -223,7 +223,7 @@ class VelocityCommandManager(CommandManager):
         Use a connected gamepad to control the command.
 
         Args:
-            gamepad: The gamepad to use.
+            gamepad: The gamepad wrapper to use.
             lin_vel_x_axis: Map this gamepad axis index to the linear velocity in the x-direction.
             lin_vel_y_axis: Map this gamepad axis index to the linear velocity in the y-direction.
             ang_vel_z_axis: Map this gamepad axis index to the angular velocity in the z-direction.
