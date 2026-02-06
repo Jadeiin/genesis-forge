@@ -122,7 +122,7 @@ After your policy is trained, you can control the commanded values with a physic
 ```{code-block} python
 :caption: train.py
 
-from genesis_forge.gamepads import Gamepad
+from genesis_forge.gamepads import GamepadWrapper
 
 #...
 
@@ -131,7 +131,7 @@ env = MyEnv(num_envs=1, headless=False)
 env.build()
 
 # Add your gamepad to the velocity command manager
-gamepad = Gamepad()
+gamepad = GamepadWrapper()
 env.velocity_command.use_gamepad(gamepad)
 
 # Run policy...
@@ -159,8 +159,9 @@ self.target_command = CommandManager(self, range={
 :caption: train.py
 
 # Connect gamepad axis 3 to the height command value
-gamepad = Gamepad()
-env.command_manager.use_gamepad(gamepad_controller, range_axis=3)
+from genesis_forge.gamepads import GamepadWrapper
+gamepad = GamepadWrapper()
+env.command_manager.use_gamepad(gamepad, range_axis=3)
 
 # Run policy...
 ```
