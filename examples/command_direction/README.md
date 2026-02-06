@@ -102,4 +102,3 @@ python ./gamepad.py
 ```
 
 You should now be able to use the joysticks to control the Go2 robot.
-```

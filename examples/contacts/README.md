@@ -75,8 +75,3 @@ python ./gamepad.py
 ```
 
 You should now be able to use the joysticks to control the Go2 robot.
-
-```bash
-sudo chmod 644 /etc/udev/rules.d/00-hidapi.rules
-sudo udevadm control --reload-rules
-```
