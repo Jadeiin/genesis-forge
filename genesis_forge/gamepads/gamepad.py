@@ -1,210 +1,154 @@
-import time
-import argparse
-import hid
+"""
+SDL2-based gamepad implementation for genesis-forge.
+
+This module provides a backward-compatible Gamepad class that wraps
+the SDL2 controller event loop.
+"""
+from __future__ import annotations
+
 import threading
+from typing import TYPE_CHECKING
 
-from .config import GamepadConfig, GamepadState
-from .logitech import LOGITECH_F710_CONFIG, LOGITECH_F310_CONFIG
+from genesis_forge.gamepads.common import Key
+from genesis_forge.gamepads.sdl2 import ControllerEventLoop
 
-GAMEPAD_CONFIGS = [
-    LOGITECH_F710_CONFIG,
-    LOGITECH_F310_CONFIG,
-]
+if TYPE_CHECKING:
+    pass
+
+__all__ = ["Gamepad", "GamepadState", "Key", "ControllerEventLoop"]
+
+
+class GamepadState:
+    """Data from a gamepad - backward compatible with HID implementation."""
+
+    def __init__(self):
+        self.axis_values: list[float] = [0.0] * 6  # 6 axes: leftx, lefty, rightx, righty, lefttrigger, righttrigger
+        self.buttons: list[str] = []
+        self.dpad: str | None = None
+
+    def axis(self, index: int) -> float:
+        """
+        Get the axis value at an index.
+        
+        Args:
+            index: The index of the axis to get the value of.
+            
+        Returns:
+            The value of the axis at the index.
+        """
+        if index >= len(self.axis_values):
+            return 0.0
+        return self.axis_values[index]
+
+    def __repr__(self):
+        return f"GamepadState(axis={self.axis_values}, buttons={self.buttons}, dpad={self.dpad})"
 
 
 class Gamepad:
     """
-    General gamepad controller, which automatically attempts to connect to known gamepads (currentlyLogitech F710 and F310).
-
+    SDL2-based gamepad controller with backward compatibility for the HID-based API.
+    
+    This implementation uses SDL2's controller API for better cross-platform support
+    and standardized button/axis mappings.
+    
     Example::
-
+    
         >>> gamepad = Gamepad()
         >>> gamepad.state
-        GamepadState(axis=[0.0, 0.0, 0.0, 0.0], buttons=[A], dpad=UP)
-        >>> gamepad.state.axis
-        [0.0, 0.0, 0.0, 0.0]
+        GamepadState(axis=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], buttons=[], dpad=None)
+        >>> gamepad.state.axis(0)
+        0.0
         >>> gamepad.state.buttons
-        ["A"]
-        >>> gamepad.state.dpad
-        "UP"
-        >>> gamepad.state.buttons = [Button.A]
-
-    Example connecting to a specific gamepad:
-
-        >>> gamepad = Gamepad(config=LOGITECH_F710_CONFIG)
-
-
-    Adapted from: https://github.com/google-deepmind/mujoco_playground/blob/a873d53765a4c83572cf44fa74768ab62ceb7be1/mujoco_playground/experimental/sim2sim/gamepad_reader.py.
+        []
     """
 
-    def __init__(
-        self,
-        config: GamepadConfig = None,
-        vendor_id=None,
-        product_id=None,
-        debug=False,
-    ):
-        self._config = config
-        self._vendor_id = vendor_id
-        self._product_id = product_id
+    # SDL2 axis indices
+    AXIS_LEFTX = 0
+    AXIS_LEFTY = 1
+    AXIS_RIGHTX = 2
+    AXIS_RIGHTY = 3
+    AXIS_TRIGGERLEFT = 4
+    AXIS_TRIGGERRIGHT = 5
 
-        if vendor_id is None and config is not None:
-            self._vendor_id = config["vendor_id"]
-        if product_id is None and config is not None:
-            self._product_id = config["product_id"]
-
+    def __init__(self, config=None, vendor_id=None, product_id=None, debug=False):
+        """
+        Initialize the SDL2 gamepad.
+        
+        Args:
+            config: Ignored for SDL2 (kept for backward compatibility)
+            vendor_id: Ignored for SDL2 (kept for backward compatibility)
+            product_id: Ignored for SDL2 (kept for backward compatibility)
+            debug: If True, print debug information
+        """
         self._state = GamepadState()
         self._debug = debug
-
         self.is_running = True
-        self._device = None
+        self._lock = threading.Lock()
 
-        self.connect()
-        self.read_thread = threading.Thread(target=self._read_loop, daemon=True)
-        self.read_thread.start()
+        # Start the SDL2 event loop in a background thread
+        self._event_loop = ControllerEventLoop(
+            handle_key=self._handle_key,
+            alive=threading.Event(),
+        )
+        self._event_loop.alive.set()
+        self._read_thread = threading.Thread(target=self._event_loop.run, daemon=True)
+        self._read_thread.start()
+
+        if self._debug:
+            print("SDL2 gamepad controller initialized")
 
     @property
     def state(self) -> GamepadState:
-        """
-        The current state of the gamepad.
-        """
-        return self._state
+        """The current state of the gamepad."""
+        with self._lock:
+            return self._state
 
-    def auto_connect(self):
-        """
-        Loop through the known gamepad configs until one connects.
-        """
-        for config in GAMEPAD_CONFIGS:
-            self._vendor_id = config["vendor_id"]
-            self._product_id = config["product_id"]
-            self._config = config
-            try:
-                if self.connect():
-                    return
-            except:
-                pass
-        raise IOError(f"Could not find a gamepad to connect to")
+    def _handle_key(self, key: Key) -> None:
+        """Handle a key event from the SDL2 controller."""
+        with self._lock:
+            if key.keytype == Key.AXIS:
+                # Map SDL2 axis to our axis array
+                axis_idx = key.index
+                if axis_idx < len(self._state.axis_values):
+                    self._state.axis_values[axis_idx] = key.value or 0.0
+                    
+            elif key.keytype == Key.BUTTON:
+                button_name = key.name or f"button_{key.index}"
+                if key.value == 1:  # Button pressed
+                    if button_name not in self._state.buttons:
+                        self._state.buttons.append(button_name)
+                else:  # Button released
+                    if button_name in self._state.buttons:
+                        self._state.buttons.remove(button_name)
+                        
+                # Handle D-pad buttons specially
+                if button_name in ["dpup", "dpdown", "dpleft", "dpright"]:
+                    if key.value == 1:
+                        self._state.dpad = button_name.replace("dp", "").upper()
+                    else:
+                        self._state.dpad = None
+
+        if self._debug:
+            print(f"Key event: {key} -> {self._state}")
+
+    def stop(self) -> None:
+        """Stop reading gamepad input."""
+        self.is_running = False
+        self._event_loop.stop()
 
     def connect(self, vendor_id=None, product_id=None):
         """
-        Attempt to connect to a gamepad.
-
+        Compatibility method - SDL2 auto-connects to controllers.
+        
         Args:
-            vendor_id: The vendor id of the gamepad to connect to.
-            product_id: The product id of the gamepad to connect to.
-
+            vendor_id: Ignored for SDL2
+            product_id: Ignored for SDL2
+            
         Returns:
-            True if the gamepad connected successfully, False otherwise.
+            True (SDL2 auto-connects)
         """
-        if vendor_id is None:
-            vendor_id = self._vendor_id
-        if product_id is None:
-            product_id = self._product_id
+        return True
 
-        # If the vendor/product IDs aren't set, loop through the available gamepad configs
-        if product_id is None and vendor_id is None:
-            self.auto_connect()
-            return
-
-        try:
-            self._device = hid.device()
-            self._device.open(vendor_id, product_id)
-            self._device.set_nonblocking(True)
-            print(
-                f"Connected to gamepad {self._device.get_manufacturer_string()} {self._device.get_product_string()}"
-            )
-            return True
-        except IOError as e:
-            raise IOError(
-                f"Error connecting to gamepad 0x{vendor_id:04x}:0x{product_id:04x}: {e}"
-            )
-
-    def stop(self):
-        """
-        Stop reading gamepad input.
-        """
-        self.is_running = False
-
-    def _read_loop(self):
-        """
-        Wait for gamepad input, and then update the gamepad state.
-        """
-        while self.is_running:
-            try:
-                data = self._device.read(64)
-                if data:
-                    try:
-                        self._state = self._parse_data(data)
-                        if self._debug:
-                            print(self._state)
-                    except Exception as e:
-                        print(f"Error parsing data: {e}")
-            except Exception as e:
-                print(f"Error reading from device: {e}")
-
-        self._device.close()
-
-    def _parse_data(self, data: list[int]) -> GamepadState:
-        """
-        Parse gamepad data into a GamepadState object.
-
-        Args:
-            data: The data to parse.
-
-        Returns:
-            The parsed GamepadState object.
-        """
-        axis = []
-        buttons = []
-        dpad = None
-
-        # No gamepad config, so we cann't parse the data
-        if self._config is None:
-            return
-
-        for cfg in self._config["mapping"]:
-            if "data" not in cfg:
-                print(f"Warning: {cfg} has no data value")
-                continue
-            if cfg["data"] >= len(data):
-                print(f"Error: {cfg} data is out of range")
-                continue
-            value = data[cfg["data"]]
-            value_truthy = False
-
-            # Apply the bitmask to the value
-            if "bitmask" in cfg:
-                value = value & cfg["bitmask"]
-                if value != 0:
-                    value_truthy = True
-            elif "button" in cfg or "dpad" in cfg:
-                print(f"Warning: {cfg} has no bitmask value")
-                continue
-
-            # Check if value is matches
-            if "value" in cfg:
-                value_truthy = value == cfg["value"]
-
-            if "button" in cfg and value_truthy:
-                buttons.append(cfg["button"].name)
-            elif "dpad" in cfg and value_truthy:
-                dpad = cfg["dpad"].name
-            elif "axis" in cfg:
-                value = -(value - 128) / 128.0
-                axis.insert(cfg["axis"], value)
-
-        self._state.axis_values = axis
-        self._state.buttons = buttons
-        self._state.dpad = dpad
-        return self._state
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Test the Gamepad connection", add_help=True
-    )
-    args = parser.parse_args()
-
-    gamepad = Gamepad(debug=True)
-    while True:
-        time.sleep(1.0)
+    def auto_connect(self):
+        """Compatibility method - SDL2 auto-connects to controllers."""
+        pass
