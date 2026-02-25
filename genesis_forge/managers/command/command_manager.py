@@ -6,7 +6,7 @@ import genesis as gs
 
 from genesis_forge.genesis_env import GenesisEnv
 from genesis_forge.managers.base import BaseManager
-from genesis_forge.gamepads import GamepadWrapper
+from genesis_forge.gamepads import Gamepad
 
 CommandRangeValue = Tuple[float, float]
 CommandRange = CommandRangeValue | dict[str, CommandRangeValue]
@@ -282,7 +282,7 @@ class CommandManager(BaseManager):
 
     def use_gamepad(
         self,
-        gamepad: GamepadWrapper,
+        gamepad: Gamepad,
         range_axis: int | dict[str, int],
     ):
         """
@@ -302,8 +302,8 @@ class CommandManager(BaseManager):
                 # ...
 
             # Connect gamepad
-            from genesis_forge.gamepads import GamepadWrapper
-            gamepad = GamepadWrapper()
+            from genesis_forge.gamepads import Gamepad
+            gamepad = Gamepad()
 
             # Create environment & connect gamepad
             env = MyEnv(num_envs=1)
@@ -328,8 +328,8 @@ class CommandManager(BaseManager):
                 # ...
 
             # Connect gamepad
-            from genesis_forge.gamepads import GamepadWrapper
-            gamepad = GamepadWrapper()
+            from genesis_forge.gamepads import Gamepad
+            gamepad = Gamepad()
 
             # Create environment & connect gamepad
             env = MyEnv(num_envs=1)

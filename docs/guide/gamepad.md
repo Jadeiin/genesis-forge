@@ -51,7 +51,7 @@ Now let's create an eval script that uses the gamepad controller to set these va
 ```{code-block} python
 :caption: eval.py
 
-from genesis_forge.gamepads import GamepadWrapper
+from genesis_forge.gamepads import Gamepad
 
 # This is where the trained policy was saved
 EXPERIMENT_DIR = "./logs/experiment"
@@ -66,7 +66,7 @@ env = MyEnv(num_envs=1, headless=False)
 env.build()
 
 # Connect the gamepad
-gamepad = GamepadWrapper()
+gamepad = Gamepad()
 env.velocity_command.use_gamepad(
     gamepad, lin_vel_y_axis=0, lin_vel_x_axis=1, ang_vel_z_axis=2
 )

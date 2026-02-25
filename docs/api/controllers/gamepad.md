@@ -1,7 +1,7 @@
 # Gamepad
 
 ```{eval-rst}
-.. autoclass:: genesis_forge.gamepads.GamepadWrapper
+.. autoclass:: genesis_forge.gamepads.Gamepad
 ```
 
 ## Low-level SDL2 API

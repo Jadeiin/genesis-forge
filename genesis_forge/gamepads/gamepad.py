@@ -10,10 +10,10 @@ import threading
 from genesis_forge.gamepads.common import Key
 from genesis_forge.gamepads.sdl2 import ControllerEventLoop
 
-__all__ = ["GamepadWrapper"]
+__all__ = ["Gamepad"]
 
 
-class GamepadWrapper:
+class Gamepad:
     """
     Wrapper around SDL2 ControllerEventLoop that provides a polling-based interface.
     
@@ -22,7 +22,7 @@ class GamepadWrapper:
     
     Example::
     
-        >>> gamepad = GamepadWrapper()
+        >>> gamepad = Gamepad()
         >>> gamepad.axis(0)  # Get left stick X axis
         0.0
         >>> gamepad.buttons()  # Get list of pressed buttons
