@@ -82,24 +82,24 @@ def controller_key_from_event(
 class ControllerEventLoop:
     """
     Minimal SDL2 controller event loop for genesis-forge.
-    
+
     This class runs in a background thread and processes SDL2 controller events,
     converting them to Key objects and passing them to a callback function.
-    
+
     Args:
         handle_key: Callback function that receives Key objects for each controller event
         alive: Optional threading.Event to control the event loop. When cleared, the loop exits.
         timeout: Milliseconds to wait for events before checking the alive flag (default: 2000ms)
-    
+
     Example::
-    
+
         def on_key(key: Key):
             print(f"Key event: {key}")
-        
+
         loop = ControllerEventLoop(handle_key=on_key)
         thread = threading.Thread(target=loop.run, daemon=True)
         thread.start()
-        
+
         # Later, to stop:
         loop.stop()
     """

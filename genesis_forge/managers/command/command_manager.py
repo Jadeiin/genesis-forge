@@ -269,7 +269,7 @@ class CommandManager(BaseManager):
             gamepad = Gamepad(GAMEPAD_PRODUCT)
             cmd_buffer = torch.zeros((N_ENVS, 1), device=gs.device)
             def gamepad_controller(_step):
-                a_pressed = "A" in gamepad.state.buttons
+                a_pressed = "a" in gamepad.state.buttons
                 cmd_buffer[:, 0] = MAX_HEIGHT if a_pressed else MIN_HEIGHT
                 return cmd_buffer
 
@@ -401,6 +401,6 @@ class CommandManager(BaseManager):
             ranges = list(self._range.values())
         for i, axis in enumerate(axis_map):
             if i < len(ranges):
-                cmd[:, i] = convert_to_range(gamepad.axis(axis), *ranges[i])
+                cmd[:, i] = convert_to_range(-gamepad.axis(axis), *ranges[i])
 
         return cmd

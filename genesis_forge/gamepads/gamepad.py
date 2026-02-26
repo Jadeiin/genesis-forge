@@ -3,6 +3,7 @@ Gamepad wrapper for backward compatibility with the old API.
 
 This provides a polling-based interface on top of the event-based SDL2 implementation.
 """
+
 from __future__ import annotations
 
 import threading
@@ -16,12 +17,12 @@ __all__ = ["Gamepad"]
 class Gamepad:
     """
     Wrapper around SDL2 ControllerEventLoop that provides a polling-based interface.
-    
+
     This maintains axis and button state that can be queried at any time, similar to
     the old HID-based Gamepad API.
-    
+
     Example::
-    
+
         >>> gamepad = Gamepad()
         >>> gamepad.axis(0)  # Get left stick X axis
         0.0
@@ -29,25 +30,17 @@ class Gamepad:
         ['a', 'b']
     """
 
-    # SDL2 axis indices (same as before)
-    AXIS_LEFTX = 0
-    AXIS_LEFTY = 1
-    AXIS_RIGHTX = 2
-    AXIS_RIGHTY = 3
-    AXIS_TRIGGERLEFT = 4
-    AXIS_TRIGGERRIGHT = 5
-
     def __init__(self, debug: bool = False):
         """
         Initialize the SDL2 gamepad wrapper.
-        
+
         Args:
             debug: If True, print debug information
         """
         self._debug = debug
         self.is_running = True
         self._lock = threading.Lock()
-        
+
         # State storage
         self._axis_values: list[float] = [0.0] * 6
         self._button_set: set[str] = set()
@@ -68,10 +61,10 @@ class Gamepad:
     def axis(self, index: int) -> float:
         """
         Get the value of an axis.
-        
+
         Args:
             index: The axis index (0-5)
-            
+
         Returns:
             The axis value in range [-1.0, 1.0] for sticks, [0.0, 1.0] for triggers
         """
@@ -83,7 +76,7 @@ class Gamepad:
     def buttons(self) -> list[str]:
         """
         Get the list of currently pressed buttons.
-        
+
         Returns:
             List of button names (lowercase, e.g., 'a', 'b', 'x', 'y')
         """
@@ -103,15 +96,17 @@ class Gamepad:
                 # Map SDL2 axis to our axis array
                 axis_idx = key.index
                 if axis_idx < len(self._axis_values):
-                    self._axis_values[axis_idx] = key.value if key.value is not None else 0.0
-                    
+                    self._axis_values[axis_idx] = (
+                        key.value if key.value is not None else 0.0
+                    )
+
             elif key.keytype == Key.BUTTON:
                 button_name = key.name or f"button_{key.index}"
                 if key.value == 1:  # Button pressed
                     self._button_set.add(button_name)
                 else:  # Button released
                     self._button_set.discard(button_name)
-                        
+
                 # Handle D-pad buttons specially
                 if button_name in ["dpup", "dpdown", "dpleft", "dpright"]:
                     if key.value == 1:
